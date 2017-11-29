@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     private SQLiteDatabase bancoDeDados;
     private ArrayAdapter<String> itensAdaptador;
     private ArrayList<String> itens;
+    private ArrayList<Integer> ids;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
         textoTarefa = findViewById(R.id.entradaId);
         botaoAdicionar = findViewById(R.id.buttonId);
+        listaTarefas = findViewById(R.id.listaId);
 
         try {
             //banco de dados
@@ -45,6 +48,13 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     String textoDigitado = textoTarefa.getText().toString();
                     salvarTarefa(textoDigitado);
+                }
+            });
+
+            listaTarefas.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                    removerTarefa(ids.get(i));
                 }
             });
 
@@ -81,11 +91,9 @@ public class MainActivity extends AppCompatActivity {
             int indiceColunaId = cursor.getColumnIndex("id");
             int indiceColunaTarefa = cursor.getColumnIndex("tarefa");
 
-            //lista
-            listaTarefas = findViewById(R.id.listaId);
-
             //criar adaptador
             itens = new ArrayList<>();
+            ids = new ArrayList<>();
             itensAdaptador = new ArrayAdapter<>(getApplicationContext(),
                     android.R.layout.simple_list_item_2,
                     android.R.id.text2,
@@ -100,8 +108,18 @@ public class MainActivity extends AppCompatActivity {
 
                 Log.i("RESULTADO - ", "TAREFA: " + cursor.getString(indiceColunaTarefa));
                 itens.add(cursor.getString(indiceColunaTarefa));
+                ids.add(Integer.parseInt(cursor.getString(indiceColunaId)));
                 cursor.moveToNext();
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void removerTarefa(Integer id) {
+        try {
+            bancoDeDados.execSQL("DELETE FROM tarefas WHERE id = " + id);
+            recuperarTarefas();
         } catch (Exception e) {
             e.printStackTrace();
         }
